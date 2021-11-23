@@ -1,0 +1,62 @@
+using System;
+using System.Threading.Tasks;
+using Intacct.SDK;
+using Intacct.SDK.Functions.Common;
+using Intacct.SDK.Xml;
+using Intacct.SDK.Xml.Response;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using NLog;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
+using Newtonsoft.Json.Linq;
+namespace Intacct.Examples
+{
+
+    public static class ListVendorsModify_1121
+    {
+        //public static void Run(ILogger logger) // Original
+        public static string Run(ILogger logger)       
+        {
+            OnlineClient client = Bootstrap.Client(logger);
+            ReadByQuery query = new ReadByQuery()
+            {
+                ObjectName = "VENDOR",
+                PageSize = 600, 
+                Fields =
+                {
+                    "RECORDNO",
+                    "VENDORID",
+                    "NAME"
+                }
+            };
+            logger.LogInformation("Executing query to Intacct API");
+            Task<OnlineResponse> task = client.Execute(query);
+            task.Wait();            
+            OnlineResponse response = task.Result;
+            Result result = response.Results[0];
+            LogManager.Flush();
+
+            int i = 1;
+            while (result.NumRemaining > 0 && i <= 1 && !string.IsNullOrEmpty(result.ResultId))
+                {
+                i++;
+                ReadMore more = new ReadMore()
+                {
+                    ResultId = result.ResultId
+                };
+                dynamic resultJson =   
+                       JsonConvert.DeserializeObject(JsonConvert.SerializeObject(result.Data));  
+                string resultJsonString = resultJson.ToString();
+
+                //return resultJsonString;
+
+                //var jsonArray = JArray.Parse(resultJsonString);
+                //var newJsonArray = jsonArray.SelectTokens("$..VENDOR");
+                //var result1 = JsonConvert.SerializeObject(newJsonArray, Newtonsoft.Json.Formatting.Indented);
+
+                return resultJsonString;
+            }
+            return "";
+        }
+    }
+}
