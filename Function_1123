@@ -1,0 +1,69 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+using System.IO;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+
+using Intacct.SDK;
+using Intacct.SDK.Functions.Common;
+using Intacct.SDK.Xml;
+using Intacct.SDK.Xml.Response;
+using NLog;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
+
+using Intacct.Examples;
+
+using Intacct.SDK.Exceptions;
+using NLog.Extensions.Logging;
+using Newtonsoft.Json.Linq;
+using System.Net.Http;
+using System.Net;
+
+//using Microsoft.Azure.WebJobs.Extensions.Storage;
+
+//using System.Management.Automation;
+
+namespace HttpTrigger_1111_1
+{
+    public static class Function
+    {
+            [FunctionName("Function1123")]
+            public static async Task<HttpResponseMessage> Run(
+
+                [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req, ILogger log) // Works on localhost & Azure Function (update 11/23/2021)
+                //[HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req, ILogger log) // works on Azure Function
+            {
+                //log.LogInformation("C# HTTP trigger function processed a request.");
+                //string name = req.Query["name"];
+
+                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                //dynamic data = JsonConvert.DeserializeObject(requestBody);
+                //name = name ?? data?.name;
+
+                ILogger logger = Bootstrap.Logger("Program");
+                var result = ListVendorsModify_1121.Run(logger);
+
+                var jsonArray = JArray.Parse(result);
+                var newJsonArray = jsonArray.SelectTokens("$..vendor");
+                var result1 = JsonConvert.SerializeObject(newJsonArray, Newtonsoft.Json.Formatting.Indented);
+           
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                //Content = new StringContent(result, Encoding.UTF8, "application/json")
+                Content = new StringContent(result1, Encoding.UTF8, "application/json")
+            };
+
+            
+
+        }
+
+    }
+}
