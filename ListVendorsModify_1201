@@ -1,0 +1,63 @@
+using System;
+using System.Threading.Tasks;
+using Intacct.SDK;
+using Intacct.SDK.Functions.Common;
+using Intacct.SDK.Xml;
+using Intacct.SDK.Xml.Response;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using NLog;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
+using Newtonsoft.Json.Linq;
+namespace Intacct.Examples
+{
+    public static class ListVendorsModify_1201
+    {
+        //public static void Run(ILogger logger) // Original
+        public static string Run(ILogger logger)       
+        {
+            OnlineClient client = Bootstrap.Client(logger);
+            ReadByQuery query = new ReadByQuery()
+            {
+                ObjectName = "VENDOR",
+                Fields =
+                 {
+                    "RECORDNO",
+                    "VENDORID",
+                    "NAME"
+                 }
+
+                // YES: CONTACT / APBILL / 
+                // 0: CUSTOMER / USERINFO / CLASS / DEPARTMENTGROUP / LOCATIONENTITY / ARINVOICE
+                // ACCOUNTGROUP:NF / DEPARTMENTS:NF / BILL(S):NF / INVOICE:NF
+                // NO PERMISSION: CUSTTYPE/ USERRIGHTS / ROLES / ARTERM / CUSTOMERGROUP
+
+                //ObjectName = "CONTACT",
+                //PageSize = 200,
+                //Fields =
+                //{
+                //    //"LOGINID",
+                //    //"CUSTOMERID",
+                //    "RECORDNO",
+                //    "CONTACTNAME"
+                //}
+
+            };
+            Task <OnlineResponse> task = client.Execute(query);
+
+            OnlineResponse response = task.Result;
+            Result result = response.Results[0];
+            LogManager.Flush();
+
+            if (result.Count > 0)
+                {
+                dynamic resultJson =   
+                       JsonConvert.DeserializeObject(JsonConvert.SerializeObject(result.Data));  
+                string resultJsonString = resultJson.ToString();
+
+                return resultJsonString;
+                }
+            return "";
+        }
+    }
+}
